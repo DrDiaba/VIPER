@@ -76,7 +76,9 @@ async def timer_handler(message: Message):
 # Вебхук для Render
 async def handle(request):
     json_data = await request.json()
-    update = await bot.parse_update(json_data)
+
+    # Используем dispatcher для обработки входящего обновления
+    update = await dp.parse_update(json_data)
     await dp.process_update(update)
 
 
