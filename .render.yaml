@@ -1,0 +1,9 @@
+services:
+  - type: worker
+    name: timer-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: API_TOKEN
+        sync: false
