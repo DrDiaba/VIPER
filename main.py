@@ -110,8 +110,11 @@ async def main():
 
     # Запуск веб-сервера
     app.on_shutdown.append(on_shutdown)
-    web.run_app(app, port=80)
+    return app
 
 
+# Эта часть запускает приложение в уже существующем цикле событий
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Запуск веб-сервера без asyncio.run()
+    app = asyncio.get_event_loop().run_until_complete(main())
+    web.run_app(app, port=80)
