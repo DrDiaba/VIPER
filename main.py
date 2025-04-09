@@ -1,60 +1,85 @@
 import asyncio
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
-from aiogram.utils import executor
+import logging
 import re
 from datetime import datetime, timedelta
 
-API_TOKEN = '8174365297:AAGNec-9iRN6YCcVBZk6zWecQHcDcnht7kM'
+from aiogram import Bot, Dispatcher, F
+from aiogram.enums import ParseMode
+from aiogram.types import Message
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.utils.markdown import hbold
+from aiogram import Router
 
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+import os
+
+# Получаем токен из переменной окружения (удобно для Render)
+API_TOKEN = "8174365297:AAGNec-9iRN6YCcVBZk6zWecQHcDcnht7kM"
+
+# Логгинг
+logging.basicConfig(level=logging.INFO)
+
+# Создаём бота и диспетчер
+bot = Bot(token=API_TOKEN, parse_mode=ParseMode.HTML)
+dp = Dispatcher(storage=MemoryStorage())
+router = Router()
+dp.include_router(router)
 
 # Хранилище таймеров
 user_timers = {}
 
+
 def parse_time_input(text: str):
-    """Извлекает название и время из текста"""
-    match = re.match(r'(.+)\s+через\s+(\d+)\s*(секунд|минут|час|часов|часы)?', text, re.IGNORECASE)
+    """
+    Извлекает название и время из строки.
+    Пример: "Пицца через 10 минут"
+    """
+    match = re.match(r'(.+)\s+через\s+(\d+)\s*(секунд|минут|час(?:ов)?|часа?)?', text, re.IGNORECASE)
     if not match:
         return None
     name, amount, unit = match.groups()
     amount = int(amount)
-    if not unit or 'секунд' in unit:
+    unit = unit.lower() if unit else "секунд"
+    if "сек" in unit:
         delta = timedelta(seconds=amount)
-    elif 'минут' in unit:
+    elif "мин" in unit:
         delta = timedelta(minutes=amount)
-    elif 'час' in unit:
+    elif "час" in unit:
         delta = timedelta(hours=amount)
     else:
         return None
     return name.strip(), delta
 
-@dp.message_handler(commands=['start'])
-async def start_handler(message: types.Message):
-    await message.reply("Привет! Чтобы создать таймер, напиши:\n\n/timer Название через 10 минут")
 
-@dp.message_handler(commands=['timer'])
-async def timer_handler(message: types.Message):
-    text = message.get_args()
-    parsed = parse_time_input(text)
+@router.message(F.text.startswith("/start"))
+async def start_handler(message: Message):
+    await message.answer("👋 Привет! Я таймер-бот.\nНапиши: \n/timer Название через 5 минут")
+
+
+@router.message(F.text.startswith("/timer"))
+async def timer_handler(message: Message):
+    args = message.text[len("/timer "):].strip()
+    parsed = parse_time_input(args)
+
     if not parsed:
-        await message.reply("❌ Неверный формат. Пример: /timer Напомнить про чай через 5 минут")
+        await message.answer("⚠️ Неверный формат.\nПример: /timer Пицца через 10 минут")
         return
 
     name, delta = parsed
-    due_time = datetime.now() + delta
-
-    # Сохраняем таймер
     user_id = message.from_user.id
     timer_id = f"{user_id}_{name}"
-    user_timers[timer_id] = due_time
 
-    await message.reply(f"✅ Таймер \"{name}\" установлен. Я напомню через {delta}.")
+    user_timers[timer_id] = datetime.now() + delta
+    await message.answer(f"✅ Таймер <b>{name}</b> установлен на {delta}.")
 
-    # Ждём и уведомляем
+    # Асинхронное ожидание и напоминание
     await asyncio.sleep(delta.total_seconds())
-    await bot.send_message(chat_id=user_id, text=f"⏰ Таймер \"{name}\" завершён!")
+    await bot.send_message(user_id, f"⏰ Время вышло! Таймер <b>{name}</b> завершён!")
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+
+async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
