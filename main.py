@@ -2,29 +2,32 @@ import asyncio
 import logging
 import re
 from datetime import datetime, timedelta
-
-from aiogram import Bot, Dispatcher, F
-from aiogram.enums import ParseMode
-from aiogram.types import Message
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.utils.markdown import hbold
-from aiogram import Router
-
 import os
 
-# Получаем токен из переменной окружения (удобно для Render)
-API_TOKEN = "8174365297:AAGNec-9iRN6YCcVBZk6zWecQHcDcnht7kM"
+from aiogram import Bot, Dispatcher, F, Router
+from aiogram.enums import ParseMode
+from aiogram.types import Message
+from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.memory import MemoryStorage
 
-# Логгинг
+# Получаем токен из переменной окружения (удобно для Render)
+API_TOKEN = os.getenv("API_TOKEN")
+
+# Логгирование
 logging.basicConfig(level=logging.INFO)
 
-# Создаём бота и диспетчер
-bot = Bot(token=API_TOKEN, parse_mode=ParseMode.HTML)
+# Создание бота с настройками по умолчанию (parse_mode = HTML)
+bot = Bot(
+    token=API_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+)
+
+# Диспетчер и роутер
 dp = Dispatcher(storage=MemoryStorage())
 router = Router()
 dp.include_router(router)
 
-# Хранилище таймеров
+# Временное хранилище таймеров (в памяти)
 user_timers = {}
 
 
@@ -52,7 +55,7 @@ def parse_time_input(text: str):
 
 @router.message(F.text.startswith("/start"))
 async def start_handler(message: Message):
-    await message.answer("👋 Привет! Я таймер-бот.\nНапиши: \n/timer Название через 5 минут")
+    await message.answer("👋 Привет! Я таймер-бот.\nНапиши:\n<code>/timer Название через 5 минут</code>")
 
 
 @router.message(F.text.startswith("/timer"))
@@ -61,7 +64,7 @@ async def timer_handler(message: Message):
     parsed = parse_time_input(args)
 
     if not parsed:
-        await message.answer("⚠️ Неверный формат.\nПример: /timer Пицца через 10 минут")
+        await message.answer("⚠️ Неверный формат.\nПример: /timer Чайник через 5 минут")
         return
 
     name, delta = parsed
@@ -71,7 +74,7 @@ async def timer_handler(message: Message):
     user_timers[timer_id] = datetime.now() + delta
     await message.answer(f"✅ Таймер <b>{name}</b> установлен на {delta}.")
 
-    # Асинхронное ожидание и напоминание
+    # Асинхронное ожидание и уведомление
     await asyncio.sleep(delta.total_seconds())
     await bot.send_message(user_id, f"⏰ Время вышло! Таймер <b>{name}</b> завершён!")
 
