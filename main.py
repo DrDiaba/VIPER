@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Создание бота с настройками по умолчанию
 bot = Bot(
-    token=API_TOKEN,
+    token=7910875433:AAE54qUwJk5l0yP6nqZ_GyE1eIQ2NzKDpAA,
     default=DefaultBotProperties(parse_mode="HTML")
 )
 
