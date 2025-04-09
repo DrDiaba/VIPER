@@ -1,24 +1,22 @@
-import asyncio
 import logging
-import re
-from datetime import datetime, timedelta
-
+import os
 from aiogram import Bot, Dispatcher, F, Router
-from aiogram.enums import ParseMode
 from aiogram.types import Message
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiohttp import web
+import asyncio
 
-# Токен бота прямо в коде (рекомендуется использовать переменные окружения для безопасности)
-API_TOKEN = "7910875433:AAE54qUwJk5l0yP6nqZ_GyE1eIQ2NzKDpAA"
+# Токен бота из переменной окружения
+API_TOKEN = os.getenv("API_TOKEN")
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
 
-# ✅ Создание бота с настройками по умолчанию
+# Создание бота с настройками по умолчанию
 bot = Bot(
     token=API_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    default=DefaultBotProperties(parse_mode="HTML")
 )
 
 dp = Dispatcher(storage=MemoryStorage())
@@ -73,12 +71,45 @@ async def timer_handler(message: Message):
     await bot.send_message(user_id, f"⏰ Время вышло! Таймер <b>{name}</b> завершён!")
 
 
-# Основная функция для старта бота
+# Вебхук для Render
+async def handle(request):
+    json_data = await request.json()
+    update = await bot.parse_update(json_data)
+    await dp.process_update(update)
+
+
+# Функция для установки webhook
+async def set_webhook():
+    # URL для вебхука. Здесь нужно указать URL твоего Render приложения
+    webhook_url = "https://viper-5e02.onrender.com/webhook"  # Заменить на URL твоего Render приложения
+    await bot.set_webhook(webhook_url)
+
+
+# Функция для старта
+async def on_start(request):
+    return web.Response(text="Bot is running!")
+
+
+# Шаг для отключения
+async def on_shutdown(app):
+    await bot.close()
+
+
+# Основная функция для старта
 async def main():
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    app = web.Application()
+
+    # Добавление маршрутов
+    app.router.add_get("/", on_start)
+    app.router.add_post("/webhook", handle)
+
+    # Настройка webhook
+    await set_webhook()
+
+    # Запуск веб-сервера
+    app.on_shutdown.append(on_shutdown)
+    web.run_app(app, port=80)
 
 
-# Запуск бота
 if __name__ == "__main__":
     asyncio.run(main())
