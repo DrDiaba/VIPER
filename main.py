@@ -3,7 +3,7 @@ import re
 import os
 from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, F, Router
-from aiogram.types import Message
+from aiogram.types import Message, Update
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiohttp import web
@@ -77,8 +77,8 @@ async def timer_handler(message: Message):
 async def handle(request):
     json_data = await request.json()
 
-    # Используем dispatcher для обработки входящего обновления
-    update = await dp.parse_update(json_data)
+    # Используем Dispatcher для обработки входящего обновления через вебхук
+    update = Update(**json_data)
     await dp.process_update(update)
 
 
