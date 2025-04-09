@@ -2,7 +2,6 @@ import asyncio
 import logging
 import re
 from datetime import datetime, timedelta
-import os
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.enums import ParseMode
@@ -10,13 +9,13 @@ from aiogram.types import Message
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
-# Получаем токен из переменной окружения
-API_TOKEN = os.getenv("API_TOKEN")
+# Токен бота прямо в коде (рекомендуется использовать переменные окружения для безопасности)
+API_TOKEN = "8174365297:AAGNec-9iRN6YCcVBZk6zWecQHcDcnht7kM"
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
 
-# ✅ ВАЖНО: создаём бота правильно для aiogram 3.7+
+# ✅ Создание бота с настройками по умолчанию
 bot = Bot(
     token=API_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -26,9 +25,10 @@ dp = Dispatcher(storage=MemoryStorage())
 router = Router()
 dp.include_router(router)
 
+# Хранилище активных таймеров
 user_timers = {}
 
-
+# Функция для парсинга текста и извлечения таймера
 def parse_time_input(text: str):
     match = re.match(r'(.+)\s+через\s+(\d+)\s*(секунд|минут|час(?:ов)?|часа?)?', text, re.IGNORECASE)
     if not match:
@@ -68,14 +68,17 @@ async def timer_handler(message: Message):
     user_timers[timer_id] = datetime.now() + delta
     await message.answer(f"✅ Таймер <b>{name}</b> установлен на {delta}.")
 
+    # Асинхронное ожидание и уведомление по истечении таймера
     await asyncio.sleep(delta.total_seconds())
     await bot.send_message(user_id, f"⏰ Время вышло! Таймер <b>{name}</b> завершён!")
 
 
+# Основная функция для старта бота
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
+# Запуск бота
 if __name__ == "__main__":
     asyncio.run(main())
