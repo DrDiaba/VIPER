@@ -1,5 +1,7 @@
 import logging
+import re
 import os
+from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.types import Message
 from aiogram.client.default import DefaultBotProperties
@@ -7,15 +9,15 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiohttp import web
 import asyncio
 
-# Токен бота из переменной окружения
-API_TOKEN = os.getenv("API_TOKEN")
+# Токен бота (уже указан напрямую в коде)
+API_TOKEN = "7910875433:AAE54qUwJk5l0yP6nqZ_GyE1eIQ2NzKDpAA"
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
 
 # Создание бота с настройками по умолчанию
 bot = Bot(
-    token=7910875433:AAE54qUwJk5l0yP6nqZ_GyE1eIQ2NzKDpAA,
+    token=API_TOKEN,
     default=DefaultBotProperties(parse_mode="HTML")
 )
 
@@ -80,8 +82,8 @@ async def handle(request):
 
 # Функция для установки webhook
 async def set_webhook():
-    # URL для вебхука. Здесь нужно указать URL твоего Render приложения
-    webhook_url = "https://viper-5e02.onrender.com/webhook"  # Заменить на URL твоего Render приложения
+    # Указание URL для вебхука
+    webhook_url = "https://viper-5e02.onrender.com/webhook"  # URL твоего Render приложения
     await bot.set_webhook(webhook_url)
 
 
