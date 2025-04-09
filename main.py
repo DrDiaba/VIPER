@@ -10,7 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
 # Токен бота прямо в коде (рекомендуется использовать переменные окружения для безопасности)
-API_TOKEN = "8174365297:AAGNec-9iRN6YCcVBZk6zWecQHcDcnht7kM"
+API_TOKEN = "7910875433:AAE54qUwJk5l0yP6nqZ_GyE1eIQ2NzKDpAA"
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
